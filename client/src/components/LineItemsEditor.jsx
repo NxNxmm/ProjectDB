@@ -25,7 +25,7 @@ export default function LineItemsEditor({ value, onChange }) {
     function addRow() {
         onChange([
             ...items,
-            { product_code: "", product_name: "", quantity: 1, unit_price: 0 },
+            { product_code: "", product_name: "", quantity: 1, unit_price: 0, line_discount_percent: 0 },
         ]);
     }
 
@@ -151,7 +151,26 @@ export default function LineItemsEditor({ value, onChange }) {
         return q * up;
     }
 
+    function computeExtended(it) {
+        return Math.round(Number(it.quantity || 0) * Number(it.unit_price || 0) * 100) / 100;
+    }
+
+    function computeDiscountAmount(it) {
+        const extended = computeExtended(it);
+        const pct = Number(it.line_discount_percent || 0);
+        return Math.round(extended * pct / 100 * 100) / 100;
+    }
+
+    function computeNetPrice(it) {
+        const extended = computeExtended(it);
+        const discountAmount = computeDiscountAmount(it);
+        return Math.round((extended - discountAmount) * 100) / 100;
+    }
+
+    const subtotal = items.reduce((s, it) => s + Number(it.quantity) * Number(it.unit_price), 0);
     const total = items.reduce((s, it) => s + computeExtended(it), 0);
+    const totalPrice    = items.reduce((s, it) => s + computeExtended(it), 0);
+    const totalDiscount = items.reduce((s, it) => s + computeDiscountAmount(it), 0);
 
     return (
         <div className="card">
@@ -194,6 +213,9 @@ export default function LineItemsEditor({ value, onChange }) {
                             <th style={{ width: '10%' }} className="text-right">Qty <span className="required-marker">*</span></th>
                             <th style={{ width: '12%' }} className="text-right">Unit Price <span className="required-marker">*</span></th>
                             <th style={{ width: '12%' }} className="text-right">Extended</th>
+                            <th>Disc %</th>
+                            <th>Disc Amt</th> 
+                            <th>Net Price</th> 
                             <th style={{ width: '100px' }} className="text-center">Actions</th>
                         </tr>
                     </thead>
@@ -223,11 +245,13 @@ export default function LineItemsEditor({ value, onChange }) {
                                 onProductCodeBlur={handleProductCodeBlur}
                                 formatBaht={formatBaht}
                                 computeExtended={computeExtended}
+                                computeDiscountAmount={computeDiscountAmount}
+                                computeNetPrice={computeNetPrice}
                             />
                         ))}
                         {items.length === 0 && (
                             <tr>
-                                <td colSpan="8" style={{ 
+                                <td colSpan="11" style={{ 
                                     padding: 40, 
                                     textAlign: 'center',
                                     color: 'var(--text-muted)'
@@ -261,13 +285,18 @@ export default function LineItemsEditor({ value, onChange }) {
                         background: 'var(--bg-body)',
                         borderRadius: 'var(--radius-sm)'
                     }}>
-                        <span style={{ 
+                        {/* <span style={{ 
                             fontSize: '0.95rem',
                             fontWeight: 600,
                             color: 'var(--text-muted)'
                         }}>
                             Subtotal ({items.length} item{items.length !== 1 ? 's' : ''})
                         </span>
+                        <span>Total Price</span> */}
+                        <span>{formatBaht(totalPrice)}</span>
+
+                        <span>Total Discount</span>
+                        <span style={{ color: '#ef4444' }}>{formatBaht(totalDiscount)}</span>
                         <span style={{ 
                             fontSize: '1.25rem',
                             fontWeight: 700,

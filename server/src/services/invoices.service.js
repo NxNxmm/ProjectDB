@@ -58,7 +58,6 @@ async function resolveInvoiceId(invoice_no) {
 }
 
 export async function getInvoice(idOrInvoiceNo) {
-  // Support both id (number) and invoice_no (string) for backward compatibility during migration
   let id = idOrInvoiceNo;
   if (typeof idOrInvoiceNo === "string" && String(idOrInvoiceNo).trim() !== "" && isNaN(Number(idOrInvoiceNo))) {
     id = await resolveInvoiceId(String(idOrInvoiceNo).trim());
@@ -69,7 +68,8 @@ export async function getInvoice(idOrInvoiceNo) {
 
   const header = await pool.query(
     `
-      select i.invoice_no, i.invoice_date, i.total_amount, i.vat, i.amount_due,
+      select i.invoice_no, i.invoice_date, i.vat_rate,
+             i.total_price, i.total_discount, i.vat_amount, i.amount_due,
              c.code as customer_code, c.name as customer_name,
              c.address_line1, c.address_line2,
              co.name as country_name,
@@ -91,7 +91,8 @@ export async function getInvoice(idOrInvoiceNo) {
       select li.id,
              p.code as product_code, p.name as product_name,
              u.code as units_code,
-             li.quantity, li.unit_price, li.extended_price
+             li.quantity, li.unit_price, li.extended_price,
+             li.line_discount_percent, li.line_discount_amount, li.line_net_price
       from invoice_line_item li
       join product p on p.id = li.product_id
       join units u on u.id = p.units_id
@@ -104,7 +105,7 @@ export async function getInvoice(idOrInvoiceNo) {
   return { header: header.rows[0], line_items: lines.rows };
 }
 
-/** Resolve product_code to id and get unit_price. line_items use product_code (not product_id). */
+/** Resolve product_code to id and get unit_price. */
 async function enrichLineItems(client, line_items) {
   const enriched = [];
   for (const li of line_items) {
@@ -115,10 +116,24 @@ async function enrichLineItems(client, line_items) {
       [product_code],
     );
     if (pr.rowCount === 0) throw new Error(`Product not found: ${product_code}`);
+    
     const product_id = pr.rows[0].id;
     const unit_price = li.unit_price ?? Number(pr.rows[0].unit_price ?? 0);
     const extended_price = Number(li.quantity) * Number(unit_price);
-    enriched.push({ ...li, product_id, unit_price, extended_price });
+    
+    const line_discount_percent = Number(li.line_discount_percent || 0);
+    const line_discount_amount  = Math.round(extended_price * line_discount_percent / 100 * 100) / 100;
+    const line_net_price        = Math.round((extended_price - line_discount_amount) * 100) / 100;
+    
+    enriched.push({ 
+      ...li, 
+      product_id, 
+      unit_price, 
+      extended_price, 
+      line_discount_percent, 
+      line_discount_amount, 
+      line_net_price
+    });
   }
   return enriched;
 }
@@ -149,9 +164,11 @@ export async function createInvoice({ invoice_no, customer_code, sales_person_co
 
     const enriched = await enrichLineItems(client, line_items);
 
-    const total = enriched.reduce((s, x) => s + x.extended_price, 0);
-    const vat = total * vat_rate;
-    const amount_due = total + vat;
+    // คำนวณยอดรวม (แก้ไขจุดที่ประกาศซ้ำ)
+    const total_price    = enriched.reduce((s, x) => s + x.extended_price, 0);
+    const total_discount = enriched.reduce((s, x) => s + x.line_discount_amount, 0);
+    const vat_amount     = Math.round((total_price - total_discount) * Number(vat_rate) * 100) / 100;
+    const amount_due     = (total_price - total_discount) + vat_amount;
 
     if (cust.rows[0].credit_limit != null) {
       const limit = Number(cust.rows[0].credit_limit);
@@ -162,15 +179,28 @@ export async function createInvoice({ invoice_no, customer_code, sales_person_co
 
     const inv = await client.query(
       `
-        insert into invoice (id, created_at, invoice_no, invoice_date, customer_id, sales_person_id, total_amount, vat, amount_due)
+        insert into invoice (
+          id, created_at, invoice_no, invoice_date, customer_id, sales_person_id, 
+          vat_rate, total_price, total_discount, vat_amount, amount_due
+        )
         values (
           (select coalesce(max(id),0)+1 from invoice),
           now(),
-          $1,$2,$3,$4,$5,$6,$7
+          $1, $2, $3, $4, $5, $6, $7, $8, $9
         )
         returning id, invoice_no
       `,
-      [resolvedInvoiceNo, invoice_date, customer_id, sales_person_id, total, vat, amount_due],
+      [
+        resolvedInvoiceNo, 
+        invoice_date, 
+        customer_id, 
+        sales_person_id, 
+        Number(vat_rate), 
+        total_price, 
+        total_discount, 
+        vat_amount, 
+        amount_due
+      ],
     );
 
     const invoice_id = inv.rows[0].id;
@@ -178,14 +208,26 @@ export async function createInvoice({ invoice_no, customer_code, sales_person_co
     for (const li of enriched) {
       await client.query(
         `
-          insert into invoice_line_item (id, created_at, invoice_id, product_id, quantity, unit_price, extended_price)
+          insert into invoice_line_item (
+            id, created_at, invoice_id, product_id, quantity, unit_price, 
+            extended_price, line_discount_percent, line_discount_amount, line_net_price
+          )
           values (
             (select coalesce(max(id),0)+1 from invoice_line_item),
             now(),
-            $1,$2,$3,$4,$5
+            $1, $2, $3, $4, $5, $6, $7, $8
           )
         `,
-        [invoice_id, li.product_id, li.quantity, li.unit_price, li.extended_price],
+        [
+          invoice_id, 
+          li.product_id, 
+          li.quantity, 
+          li.unit_price, 
+          li.extended_price, 
+          li.line_discount_percent, 
+          li.line_discount_amount, 
+          li.line_net_price
+        ],
       );
     }
 
@@ -241,9 +283,11 @@ export async function updateInvoice(
 
     const enriched = await enrichLineItems(client, line_items);
 
-    const total = enriched.reduce((s, x) => s + x.extended_price, 0);
-    const vat = total * vat_rate;
-    const amount_due = total + vat;
+    // คำนวณยอดรวม (แก้ไขจุดที่ประกาศซ้ำ)
+    const total_price    = enriched.reduce((s, x) => s + x.extended_price, 0);
+    const total_discount = enriched.reduce((s, x) => s + x.line_discount_amount, 0);
+    const vat_amount     = Math.round((total_price - total_discount) * Number(vat_rate) * 100) / 100;
+    const amount_due     = (total_price - total_discount) + vat_amount;
 
     if (cust.rows[0].credit_limit != null) {
       const limit = Number(cust.rows[0].credit_limit);
@@ -262,10 +306,22 @@ export async function updateInvoice(
     await client.query(
       `
         UPDATE invoice
-        SET invoice_no=$1, invoice_date=$2, customer_id=$3, sales_person_id=$4, total_amount=$5, vat=$6, amount_due=$7
-        WHERE id=$8
+        SET invoice_no=$1, invoice_date=$2, customer_id=$3, sales_person_id=$4, 
+            vat_rate=$5, total_price=$6, total_discount=$7, vat_amount=$8, amount_due=$9
+        WHERE id=$10
       `,
-      [resolvedInvoiceNo, invoice_date, customer_id, sales_person_id, total, vat, amount_due, id],
+      [
+        resolvedInvoiceNo, 
+        invoice_date, 
+        customer_id, 
+        sales_person_id, 
+        Number(vat_rate), 
+        total_price, 
+        total_discount, 
+        vat_amount, 
+        amount_due, 
+        id
+      ],
     );
 
     const keptLineIds = line_items.filter((li) => li.id != null && Number(li.id) > 0).map((li) => Number(li.id));
@@ -281,27 +337,49 @@ export async function updateInvoice(
 
     for (const li of enriched) {
       const lineId = li.id != null && Number(li.id) > 0 ? Number(li.id) : null;
-      const extended_price = Number(li.quantity || 0) * Number(li.unit_price || 0);
       if (lineId) {
         await client.query(
           `
             UPDATE invoice_line_item
-            SET product_id=$1, quantity=$2, unit_price=$3, extended_price=$4
-            WHERE id=$5 AND invoice_id=$6
+            SET product_id=$1, quantity=$2, unit_price=$3, extended_price=$4, 
+                line_discount_percent=$5, line_discount_amount=$6, line_net_price=$7
+            WHERE id=$8 AND invoice_id=$9
           `,
-          [li.product_id, li.quantity, li.unit_price, extended_price, lineId, id],
+          [
+            li.product_id, 
+            li.quantity, 
+            li.unit_price, 
+            li.extended_price, 
+            li.line_discount_percent, 
+            li.line_discount_amount, 
+            li.line_net_price, 
+            lineId, 
+            id
+          ],
         );
       } else {
         await client.query(
           `
-            INSERT INTO invoice_line_item (id, created_at, invoice_id, product_id, quantity, unit_price, extended_price)
+            INSERT INTO invoice_line_item (
+              id, created_at, invoice_id, product_id, quantity, unit_price, 
+              extended_price, line_discount_percent, line_discount_amount, line_net_price
+            )
             VALUES (
               (select coalesce(max(id),0)+1 from invoice_line_item),
               now(),
-              $1,$2,$3,$4,$5
+              $1, $2, $3, $4, $5, $6, $7, $8
             )
           `,
-          [id, li.product_id, li.quantity, li.unit_price, extended_price],
+          [
+            id, 
+            li.product_id, 
+            li.quantity, 
+            li.unit_price, 
+            li.extended_price, 
+            li.line_discount_percent, 
+            li.line_discount_amount, 
+            li.line_net_price
+          ],
         );
       }
     }
@@ -316,4 +394,3 @@ export async function updateInvoice(
     client.release();
   }
 }
-
