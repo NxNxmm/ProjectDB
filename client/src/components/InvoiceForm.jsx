@@ -166,12 +166,20 @@ export default function InvoiceForm({ onSubmit, submitting, initialData }) {
       invoice_date: invoiceDate,
       vat_rate: vatRate,
       line_items: items.map((x) => {
+        const extended = Number(x.quantity || 0) * Number(x.unit_price || 0);
+        const discPercent = Number(x.line_discount_percent || 0);
+        const discAmount = Math.round(extended * discPercent / 100 * 100) / 100;
+        const netPrice = Math.round((extended - discAmount) * 100) / 100;
+
         const out = {
           product_code: String(x.product_code || "").trim(),
           quantity: Number(x.quantity),
           unit_price: x.unit_price === "" || x.unit_price === null ? undefined : Number(x.unit_price),
-          line_discount_percent: Number(x.line_discount_percent || 0),
+          line_discount_percent: discPercent,
+          line_discount_amount: discAmount,
+          line_net_price: netPrice,
         };
+        
         if (x.line_item_id != null && Number(x.line_item_id) > 0) out.id = Number(x.line_item_id);
         return out;
       }),

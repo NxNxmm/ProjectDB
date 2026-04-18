@@ -173,8 +173,8 @@ export default function LineItemRow({
       <td>
         <input
           type="number"
-          step="0.01"
-          min="0.01"
+          step="1"
+          min="0"
           value={it.quantity}
           onChange={(e) => update(i, { quantity: e.target.value })}
           className="form-control"
@@ -195,11 +195,11 @@ export default function LineItemRow({
           {formatBaht(it.unit_price)}
         </div>
       </td>
-      <td>
+      {/* <td>
         <div style={{ textAlign: "right", fontWeight: 600, color: "var(--primary)", fontSize: "0.95rem" }}>
           {formatBaht(computeExtended(it))}
         </div>
-      </td>
+      </td> */}
       <td>
         <div style={{ textAlign: "right", fontWeight: 600, color: "var(--primary)", fontSize: "0.95rem" }}>
           {formatBaht(extended)}

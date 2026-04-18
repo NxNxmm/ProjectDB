@@ -25,13 +25,13 @@ export default function LineItemsEditor({ value, onChange }) {
     function addRow() {
         onChange([
             ...items,
-            { product_code: "", product_name: "", quantity: 1, unit_price: 0, line_discount_percent: 0 },
+            { product_code: "", product_name: "", quantity: 1, unit_price: 0, line_discount_percent: 0.00 },
         ]);
     }
 
     // Insert a new empty row after index i (add row in between)
     function insertRowAfter(i) {
-        const newRow = { product_code: "", product_name: "", quantity: 1, unit_price: 0 };
+        const newRow = { product_code: "", product_name: "", quantity: 1, unit_price: 0, line_discount_percent: 0.00 };
         const next = [...items.slice(0, i + 1), newRow, ...items.slice(i + 1)];
         onChange(next);
     }
@@ -172,6 +172,11 @@ export default function LineItemsEditor({ value, onChange }) {
     const totalPrice    = items.reduce((s, it) => s + computeExtended(it), 0);
     const totalDiscount = items.reduce((s, it) => s + computeDiscountAmount(it), 0);
 
+    const netPrice      = Math.round((totalPrice - totalDiscount) * 100) / 100;
+    const vatRate       = 0.07;
+    const vatAmount     = Math.round((netPrice * vatRate) * 100) / 100; 
+    const amountDue     = Math.round((netPrice + vatAmount) * 100) / 100;
+
     return (
         <div className="card">
             <div style={{ 
@@ -213,9 +218,9 @@ export default function LineItemsEditor({ value, onChange }) {
                             <th style={{ width: '10%' }} className="text-right">Qty <span className="required-marker">*</span></th>
                             <th style={{ width: '12%' }} className="text-right">Unit Price <span className="required-marker">*</span></th>
                             <th style={{ width: '12%' }} className="text-right">Extended</th>
-                            <th>Disc %</th>
-                            <th>Disc Amt</th> 
-                            <th>Net Price</th> 
+                            <th style={{ width: '8%' }} className="text-right">Disc %</th>
+                            <th style={{ width: '10%' }} className="text-right">Disc Amt</th> 
+                            <th style={{ width: '10%' }} className="text-right">Net Price</th> 
                             <th style={{ width: '100px' }} className="text-center">Actions</th>
                         </tr>
                     </thead>
@@ -285,14 +290,14 @@ export default function LineItemsEditor({ value, onChange }) {
                         background: 'var(--bg-body)',
                         borderRadius: 'var(--radius-sm)'
                     }}>
-                        {/* <span style={{ 
+                        <span style={{ 
                             fontSize: '0.95rem',
                             fontWeight: 600,
                             color: 'var(--text-muted)'
                         }}>
                             Subtotal ({items.length} item{items.length !== 1 ? 's' : ''})
                         </span>
-                        <span>Total Price</span> */}
+                        <span>Total Price</span>
                         <span>{formatBaht(totalPrice)}</span>
 
                         <span>Total Discount</span>
