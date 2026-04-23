@@ -1,10 +1,9 @@
 import { getReceiptList, getInvoiceReceiptReport } from "../services/receiptReports.service.js";
-  -- getReceiptList, getInvoiceReceiptReport
 
 export async function handleReceiptList(req, res) {
   try {
     const { date_from, date_to, customer_code, page = 1, limit = 50 } = req.query;   -- query
-    const result = await getReceiptList({ date_from, date_to, customer_code, page, limit });   -- getReceiptList
+    const result = await getReceiptList({ date_from, date_to, customer_code, page, limit });
     res.json({
       success: true,
       data: result.data,
@@ -18,7 +17,7 @@ export async function handleReceiptList(req, res) {
 export async function handleInvoiceReceiptReport(req, res) {
   try {
     const { date_from, date_to, customer_code, page = 1, limit = 50 } = req.query;   -- query
-    const result = await getInvoiceReceiptReport({ date_from, date_to, customer_code, page, limit });   -- getInvoiceReceiptReport
+    const result = await getInvoiceReceiptReport({ date_from, date_to, customer_code, page, limit });
     res.json({
       success: true,
       data: result.data,
