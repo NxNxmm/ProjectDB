@@ -1,6 +1,6 @@
 import React from "react";
 import { toast } from "react-toastify";
-import { listReceipts, deleteReceipt } from "../../api/receipts.api.js";   -- deleteReceipt
+import { listReceipts, deleteReceipt } from "../../api/receipts.api.js";
 import { formatBaht, formatDate } from "../../utils.js";
 import DataList from "../../components/DataList.jsx";
 import { ConfirmModal, AlertModal } from "../../components/Modal.jsx";

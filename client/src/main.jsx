@@ -14,6 +14,9 @@ import PaymentList from "./pages/payments/PaymentList.jsx";
 import Reports from "./pages/reports/Reports.jsx";
 import SalesPersonList from "./pages/salesPerson/SalesPersonList.jsx"
 import SalesPersonPage from "./pages/salesPerson/SalesPersonPage.jsx";
+import ReceiptList from "./pages/receipts/ReceiptList.jsx"; 
+import ReceiptPage from "./pages/receipts/ReceiptPage.jsx"; 
+import ReceiptReports from "./pages/reports/ReceiptReports.jsx"; 
 import { http } from "./api/http.js";
 import "./index.css";
 
@@ -85,14 +88,20 @@ function Sidebar() {
             </svg>
           Payments
         </NavLink>
-        {/* <NavLink to="/sales-persons">
-        Sales Persons
-        </NavLink> */}
+
         <NavLink to="/sales-persons" className={getLinkClass}>
           <svg style={{ marginRight: 10 }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             Sales Person
         </NavLink>
 
+        <NavLink to="/receipts" className={getLinkClass}>
+          <svg style={{ marginRight: 10 }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          Receipts
+        </NavLink>
 
         <SubMenu 
           basePath="/reports"
@@ -108,6 +117,13 @@ function Sidebar() {
           <NavLink to="/reports/customer-sales" className={getSubLinkClass}>
             Customer Buying
           </NavLink>
+          <NavLink to="/reports/receipt-list" className={getSubLinkClass}>
+            Receipt List
+          </NavLink>
+          <NavLink to="/reports/invoice-receipt" className={getSubLinkClass}>
+            Invoice &amp; Receipt
+          </NavLink>
+
         </SubMenu>
       </nav>
     </aside>
@@ -218,16 +234,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/reports/product-sales" element={<Layout><Reports type="product-sales" /></Layout>} />
         <Route path="/reports/monthly-sales" element={<Layout><Reports type="monthly-sales" /></Layout>} />
         <Route path="/reports/customer-sales" element={<Layout><Reports type="customer-sales" /></Layout>} />
-        <Route path="/payments" element={<Layout><PaymentList /></Layout>} />
-        {/* <Route path="sales" element={<Layout><SalesPersonList /></Layout>} />
-        <Route path="/sales/new" element={<Layout><SalesPersonsPage mode="create" /></Layout>} />
-        <Route path="/sales/:id" element={<Layout><SalesPersonsPage mode="view" /></Layout>} />
-        <Route path="/sales/:id/edit" element={<Layout><SalesPersonsPage mode="edit" /></Layout>} /> */}
-        
+        <Route path="/payments" element={<Layout><PaymentList /></Layout>} />        
         <Route path="/sales-persons" element={<Layout><SalesPersonList /></Layout>} />
         <Route path="/sales-persons/new" element={<Layout><SalesPersonPage mode="create" /></Layout>} />
         <Route path="/sales-persons/:code" element={<Layout><SalesPersonPage mode="view" /></Layout>} />
         <Route path="/sales-persons/:code/edit" element={<Layout><SalesPersonPage mode="edit" /></Layout>} />
+        <Route path="/receipts" element={<Layout><ReceiptList /></Layout>} />                                  
+        <Route path="/receipts/new" element={<Layout><ReceiptPage mode="create" /></Layout>} />            
+        <Route path="/receipts/:receiptNo/edit" element={<Layout><ReceiptPage mode="edit" /></Layout>} />      
+        <Route path="/receipts/:receiptNo" element={<Layout><ReceiptPage mode="view" /></Layout>} />            
+        <Route path="/reports/receipt-list" element={<Layout><ReceiptReports tab="receipt-list" /></Layout>} />      
+        <Route path="/reports/invoice-receipt" element={<Layout><ReceiptReports tab="invoice-receipt" /></Layout>} /> 
 
       </Routes>
     </BrowserRouter>
