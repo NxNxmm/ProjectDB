@@ -283,207 +283,212 @@ export default function ReceiptPage({ mode: propMode }) {
   const isCreate = mode === "create";
   const title = isCreate ? "Create Receipt" : `Edit Receipt ${receiptNo}`;
 
-  return (
-    <div>
-      <AlertModal
-        isOpen={alertModal.isOpen}
-        onClose={() => setAlertModal((prev) => ({ ...prev, isOpen: false }))}
-        title={alertModal.title}
-        message={alertModal.message}
-      />
-      <CustomerPickerModal
-        isOpen={customerModalOpen}
-        onClose={() => setCustomerModalOpen(false)}
-        initialSearch={customerCode}
-        onSelect={(code) => { handleCustomerChange(String(code)); setCustomerModalOpen(false); }}
-      />
-      <InvoicePickerModal
-        isOpen={invoicePickerOpen}
-        onClose={() => setInvoicePickerOpen(false)}
-        onSelect={handleInvoiceSelect}
-        customerCode={customerCode}
-        excludeReceiptNo={mode === "edit" ? receiptNo : null}
-      />
+return (
+  <>
+    <AlertModal
+      isOpen={alertModal.isOpen}
+      onClose={() => setAlertModal((prev) => ({ ...prev, isOpen: false }))}
+      title={alertModal.title}
+      message={alertModal.message}
+    />
+    <CustomerPickerModal
+      isOpen={customerModalOpen}
+      onClose={() => setCustomerModalOpen(false)}
+      initialSearch={customerCode}
+      onSelect={(code) => { 
+        handleCustomerChange(String(code)); 
+        setCustomerModalOpen(false); 
+      }}
+    />
+    <InvoicePickerModal
+      isOpen={invoicePickerOpen}
+      onClose={() => setInvoicePickerOpen(false)}
+      onSelect={handleInvoiceSelect}
+      customerCode={customerCode}
+      excludeReceiptNo={mode === "edit" ? receiptNo : null}
+    />
 
-      <div className="page-header">
-        <h3 className="page-title">{title}</h3>
-        <Link to="/receipts" className="btn btn-outline">
-          <svg style={{ marginRight: 8 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          Back
-        </Link>
-      </div>
+    <div className="page-header">
+      <h3 className="page-title">{title}</h3>
+      <Link to="/receipts" className="btn btn-outline">
+        <svg style={{ marginRight: 8 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back
+      </Link>
+    </div>
 
-      {err && <div className="alert alert-error">{err}</div>}
+    {err && <div className="alert alert-error">{err}</div>}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 16, marginBottom: 16 }}>
-          <div className="card">
-            <h4>Receipt Details</h4>
-            <div style={{ display: "grid", gap: 12 }}>
+    <form onSubmit={handleSubmit}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 16, marginBottom: 16 }}>
+        <div className="card">
+          <h4>Receipt Details</h4>
+          <div style={{ display: "grid", gap: 12 }}>
 
-              <div className="form-group">
-                <label className="form-label">
-                  {isCreate && autoNo ? "Receipt No" : <>Receipt No <span className="required-marker">*</span></>}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    className="form-control"
-                    disabled={isCreate ? autoNo : true}
-                    value={isCreate ? receiptNoInput : (receiptNoInput || receiptNo)}
-                    onChange={(e) => setReceiptNoInput(e.target.value)}
-                    placeholder="e.g. RCT26-00001"
-                  />
-                  {isCreate && (
-                    <div className="form-inline-option">
-                      <input type="checkbox" checked={autoNo} onChange={(e) => setAutoNo(e.target.checked)} id="rct_auto" />
-                      <label htmlFor="rct_auto">Auto</label>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Receipt Date <span className="required-marker">*</span></label>
-                <input type="date" className="form-control" value={receiptDate} onChange={(e) => setReceiptDate(e.target.value)} />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Customer Code <span className="required-marker">*</span></label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input
-                    className="form-control"
-                    value={customerCode}
-                    onChange={(e) => handleCustomerChange(e.target.value)}
-                    placeholder="e.g. C001"
-                    style={{ flex: 1 }}
-                  />
-                  <button type="button" className="btn btn-primary" onClick={() => setCustomerModalOpen(true)}>LoV</button>
-                  {customerCode && (   -- customerCode
-                    <button type="button" onClick={() => handleCustomerChange("")}
-                      style={{ padding: "0 12px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", background: "var(--bg-body)", color: "var(--text-muted)", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}>
-                      ×
-                    </button>
-                  )}
-                </div>
-                {customerLoadError && <span style={{ fontSize: "0.8rem", color: "#ef4444", marginTop: 4, display: "block" }}>{customerLoadError}</span>}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Customer Name</label>
-                <input className="form-control" disabled value={customerName} placeholder="—" readOnly />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Payment Method <span className="required-marker">*</span></label>
-                <select className="form-control" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Payment Notes</label>
-                <textarea className="form-control" rows={3} value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} placeholder="Optional notes..." />
+            <div className="form-group">
+              <label className="form-label">
+                {isCreate && autoNo ? "Receipt No" : <>Receipt No <span className="required-marker">*</span></>}
+              </label>
+              <div className="flex gap-2">
+                <input
+                  className="form-control"
+                  disabled={isCreate ? autoNo : true}
+                  // แนะนำ: ใช้ receiptNoInput เป็นหลัก และเซ็ตค่าเริ่มต้นใน useEffect
+                  value={receiptNoInput} 
+                  onChange={(e) => setReceiptNoInput(e.target.value)}
+                  placeholder="e.g. RCT26-00001"
+                />
+                {isCreate && (
+                  <div className="form-inline-option">
+                    <input type="checkbox" checked={autoNo} onChange={(e) => setAutoNo(e.target.checked)} id="rct_auto" />
+                    <label htmlFor="rct_auto">Auto</label>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
 
-          <div className="card" style={{ height: "fit-content" }}>
-            <h4>Summary</h4>
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 2,
-                          display: "flex", justifyContent: "space-between",
-                          fontSize: "1.1rem", fontWeight: 700, color: "var(--primary)" }}>
-              <span>Total Received</span>
-              <span>{formatBaht(totalReceived)}</span>
+            <div className="form-group">
+              <label className="form-label">Receipt Date <span className="required-marker">*</span></label>
+              <input type="date" className="form-control" value={receiptDate} onChange={(e) => setReceiptDate(e.target.value)} />
             </div>
-            <div style={{ marginTop: 16 }}>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ width: "100%", padding: "10px 14px", fontSize: "0.875rem" }}
-                disabled={submitting || !customerCode || !customerName}
-              >
-                {submitting ? (isCreate ? "Creating..." : "Saving...") : (isCreate ? "Create Receipt" : "Save Changes")}
-              </button>
+
+            <div className="form-group">
+              <label className="form-label">Customer Code <span className="required-marker">*</span></label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  className="form-control"
+                  value={customerCode}
+                  onChange={(e) => handleCustomerChange(e.target.value)}
+                  placeholder="e.g. C001"
+                  style={{ flex: 1 }}
+                />
+                <button type="button" className="btn btn-primary" onClick={() => setCustomerModalOpen(true)}>LoV</button>
+                {customerCode && (
+                  <button type="button" onClick={() => handleCustomerChange("")}
+                    style={{ padding: "0 12px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", background: "var(--bg-body)", color: "var(--text-muted)", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}>
+                    ×
+                  </button>
+                )}
+              </div>
+              {customerLoadError && <span style={{ fontSize: "0.8rem", color: "#ef4444", marginTop: 4, display: "block" }}>{customerLoadError}</span>}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Customer Name</label>
+              <input className="form-control" disabled value={customerName} placeholder="—" readOnly />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Payment Method <span className="required-marker">*</span></label>
+              <select className="form-control" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Payment Notes</label>
+              <textarea className="form-control" rows={3} value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} placeholder="Optional notes..." />
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h4 style={{ margin: 0 }}>Invoice Line Items</h4>
-            <button type="button" className="btn btn-outline" onClick={addLine} disabled={!customerCode || !customerName}>
-              + Add Row
+        <div className="card" style={{ height: "fit-content" }}>
+          <h4>Summary</h4>
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 2,
+                        display: "flex", justifyContent: "space-between",
+                        fontSize: "1.1rem", fontWeight: 700, color: "var(--primary)" }}>
+            <span>Total Received</span>
+            <span>{formatBaht(totalReceived)}</span>
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ width: "100%", padding: "10px 14px", fontSize: "0.875rem" }}
+              disabled={submitting || !customerCode || !customerName}
+            >
+              {submitting ? (isCreate ? "Creating..." : "Saving...") : (isCreate ? "Create Receipt" : "Save Changes")}
             </button>
           </div>
+        </div>
+      </div>
 
-          <div className="table-container">
-            <table className="modern-table">
-              <thead>
-                <tr>
-                  <th>Invoice No</th>
-                  <th className="text-right">Full Amount Due</th>
-                  <th className="text-right">Already Received</th>
-                  <th className="text-right">Amount Remaining</th>
-                  <th className="text-right" style={{ minWidth: 160 }}>Amount Received Here</th>
-                  <th className="text-right">Still Remaining</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {lines.map((line, idx) => {
-                  const stillRemaining = Number(line.amount_remain || 0) - Number(line.amount_received || 0);
-                  return (
-                    <tr key={idx}>
-                      <td>
-                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                          <input className="form-control" style={{ width: 140, fontSize: "0.85rem" }}
-                            value={line.invoice_no} readOnly placeholder="Select..." /> 
-                          <button type="button" className="btn btn-primary"
-                            style={{ padding: "4px 10px", fontSize: "0.8rem", whiteSpace: "nowrap" }}
-                            disabled={!customerCode || !customerName}
-                            onClick={() => openInvoicePicker(idx)}>
-                            LoV
-                          </button>
-                        </div>
-                      </td>
-                      <td className="text-right">{formatBaht(line.amount_due)}</td>
-                      <td className="text-right">{formatBaht(line.amount_already_received)}</td>
-                      <td className="text-right">{formatBaht(line.amount_remain)}</td> 
-                      <td className="text-right">
-                        <input type="number" step="0.01" min="0" className="form-control"
-                          style={{ width: 140, textAlign: "right", fontSize: "0.85rem" }}
-                          value={line.amount_received}
-                          onChange={(e) => updateLine(idx, "amount_received", e.target.value)} />
-                      </td>
-                      <td className="text-right" style={{ color: stillRemaining > 0 ? "#ef4444" : "#22c55e", fontWeight: 600 }}>
-                        {formatBaht(stillRemaining)}
-                      </td>
-                      <td>
-                        <button type="button" className="btn btn-outline"
-                          style={{ fontSize: "0.7rem", padding: "4px 8px", color: "#ef4444", borderColor: "#ef4444" }}
-                          onClick={() => removeLine(idx)}>
-                          Remove
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h4 style={{ margin: 0 }}>Invoice Line Items</h4>
+          <button type="button" className="btn btn-outline" onClick={addLine} disabled={!customerCode || !customerName}>
+            + Add Row
+          </button>
+        </div>
+
+        <div className="table-container">
+          <table className="modern-table">
+            <thead>
+              <tr>
+                <th>Invoice No</th>
+                <th className="text-right">Full Amount Due</th>
+                <th className="text-right">Already Received</th>
+                <th className="text-right">Amount Remaining</th>
+                <th className="text-right" style={{ minWidth: 160 }}>Amount Received Here</th>
+                <th className="text-right">Still Remaining</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((line, idx) => {
+                const stillRemaining = Number(line.amount_remain || 0) - Number(line.amount_received || 0);
+                return (
+                  <tr key={idx}> {/* แนะนำ: เปลี่ยนเป็น key={line.id} หากมีไอดีจากฐานข้อมูล */}
+                    <td>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <input className="form-control" style={{ width: 140, fontSize: "0.85rem" }}
+                          value={line.invoice_no} readOnly placeholder="Select..." /> 
+                        <button type="button" className="btn btn-primary"
+                          style={{ padding: "4px 10px", fontSize: "0.8rem", whiteSpace: "nowrap" }}
+                          disabled={!customerCode || !customerName}
+                          onClick={() => openInvoicePicker(idx)}>
+                          LoV
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {lines.length === 0 && (
-                  <tr>
-                    <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--text-muted)" }}>
-                      No lines yet. Click "+ Add Row" to add an invoice.
+                      </div>
+                    </td>
+                    <td className="text-right">{formatBaht(line.amount_due)}</td>
+                    <td className="text-right">{formatBaht(line.amount_already_received)}</td>
+                    <td className="text-right">{formatBaht(line.amount_remain)}</td> 
+                    <td className="text-right">
+                      <input type="number" step="0.01" min="0" className="form-control"
+                        style={{ width: 140, textAlign: "right", fontSize: "0.85rem" }}
+                        value={line.amount_received}
+                        onChange={(e) => updateLine(idx, "amount_received", e.target.value)} />
+                    </td>
+                    <td className="text-right" style={{ color: stillRemaining > 0 ? "#ef4444" : "#22c55e", fontWeight: 600 }}>
+                      {formatBaht(stillRemaining)}
+                    </td>
+                    <td>
+                      <button type="button" className="btn btn-outline"
+                        style={{ fontSize: "0.7rem", padding: "4px 8px", color: "#ef4444", borderColor: "#ef4444" }}
+                        onClick={() => removeLine(idx)}>
+                        Remove
+                      </button>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+              {lines.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--text-muted)" }}>
+                    No lines yet. Click "+ Add Row" to add an invoice.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
+  </>
   );
 }
