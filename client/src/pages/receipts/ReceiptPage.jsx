@@ -16,7 +16,7 @@ function emptyLine() {
   return { invoice_no: "", amount_due: 0, amount_already_received: 0, amount_remain: 0, amount_received: 0 };
 }
 
-export default function ReceiptPage({ mode: propMode }) {
+export default function ReceiptPage({mode: propMode }) {
   const { receiptNo } = useParams();
   // propMode มาจาก Route (mode="create"/"edit"/"view") ถ้าไม่มีก็ detect จาก URL
   const mode = propMode || (receiptNo ? "view" : "create");
@@ -137,7 +137,7 @@ export default function ReceiptPage({ mode: propMode }) {
     if (lines.length === 0) errs.push("At least one invoice line is required");
     lines.forEach((l, i) => {
       if (!l.invoice_no) errs.push(`Row ${i + 1}: Invoice is required`);
-      const amt = Number(l.amount_received);   -- amount_received
+      const amt = Number(l.amount_received); 
       if (isNaN(amt) || amt <= 0) errs.push(`Row ${i + 1}: Amount Received must be a positive number`);
     });
     // ตรวจ invoice ซ้ำใน receipt เดียวกัน
@@ -181,7 +181,7 @@ export default function ReceiptPage({ mode: propMode }) {
       } else {
         await updateReceipt(receiptNo, payload);
         toast.success("Receipt updated.");
-        nav(`/receipts/${encodeURIComponent(______receiptNo______)}`);
+        nav(`/receipts/${encodeURIComponent(receiptNo)}`);
       }
     } catch (e) {
       const msg = String(e.message || e);
@@ -245,6 +245,7 @@ export default function ReceiptPage({ mode: propMode }) {
               </thead>
               <tbody>
                 {items.map((li) => {
+                  // console.log(items?.map(li => li.id));
                   const balanceAfter = Number(li.amount_remain_before_this ?? li.amount_remain ?? 0) - Number(li.amount_received || 0);
                   return (
                     <tr key={li.id}>
@@ -252,7 +253,7 @@ export default function ReceiptPage({ mode: propMode }) {
                       <td className="text-right">{formatBaht(li.amount_due)}</td>
                       <td className="text-right">{formatBaht(li.amount_already_received)}</td>
                       <td className="text-right">{formatBaht(li.amount_remain_before_this ?? li.amount_remain)}</td>
-                      <td className="text-right font-bold">{formatBaht(li.____________)}</td>   -- amount_received
+                      <td className="text-right font-bold">{formatBaht(li.amount_received)}</td>
                       <td className="text-right" style={{ color: balanceAfter > 0 ? "#ef4444" : "#22c55e" }}>
                         {formatBaht(balanceAfter)}
                       </td>
@@ -262,7 +263,7 @@ export default function ReceiptPage({ mode: propMode }) {
               </tbody>
             </table>
           </div>
-
+          
           <div className="mt-4 flex justify-between">
             <div className="no-print text-muted" style={{ maxWidth: 300, fontSize: "0.8rem" }}>
               Thank you for your payment.
@@ -442,7 +443,7 @@ return (
               {lines.map((line, idx) => {
                 const stillRemaining = Number(line.amount_remain || 0) - Number(line.amount_received || 0);
                 return (
-                  <tr key={idx}> {/* แนะนำ: เปลี่ยนเป็น key={line.id} หากมีไอดีจากฐานข้อมูล */}
+                  <tr key={line.id}>
                     <td>
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <input className="form-control" style={{ width: 140, fontSize: "0.85rem" }}

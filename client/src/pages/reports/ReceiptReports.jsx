@@ -88,12 +88,12 @@ function ReceiptListReport() {
                   <tr><td colSpan={7} style={{ textAlign: "center", padding: 32, color: "var(--text-muted)" }}>No receipts found.</td></tr>
                 ) : data.map((row, i) => (
                   <tr key={i}>
-                    <td style={{ fontWeight: 500 }}>{row.receipt_no}</td>   -- receipt_no
-                    <td>{formatDate(row.receipt_date)}</td>   -- receipt_date
-                    <td>{row.customer_code}</td>   -- customer_code
-                    <td>{row.customer_name}</td>   -- customer_name
-                    <td>{row.payment_method}</td>   -- payment_method
-                    <td>{row.payment_notes || "-"}</td>   -- payment_notes
+                    <td style={{ fontWeight: 500 }}>{row.receipt_no}</td>
+                    <td>{formatDate(row.receipt_date)}</td>
+                    <td>{row.customer_code}</td> 
+                    <td>{row.customer_name}</td>
+                    <td>{row.payment_method}</td>
+                    <td>{row.payment_notes || "-"}</td>
                     <td className="text-right font-bold">{formatBaht(row.total_received)}</td> 
                   </tr>
                 ))}
