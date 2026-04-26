@@ -6,15 +6,15 @@ export async function getReceiptList({ date_from, date_to, customer_code, page =
   let idx = 1;
 
   if (date_from) {
-    conditions.push(`r.receipt_date >= $${idx++}`);   -- receipt_date
+    conditions.push(`r.receipt_date >= $${idx++}`);
     params.push(date_from);
   }
   if (date_to) {
-    conditions.push(`r.receipt_date <= $${idx++}`);   -- receipt_date
+    conditions.push(`r.receipt_date <= $${idx++}`);
     params.push(date_to);
   }
   if (customer_code && String(customer_code).trim() !== "") {
-    conditions.push(`c.code = $${idx++}`);    -- code
+    conditions.push(`c.code = $${idx++}`);
     params.push(String(customer_code).trim());
   }
 
@@ -23,7 +23,7 @@ export async function getReceiptList({ date_from, date_to, customer_code, page =
   const countResult = await pool.query(
     `SELECT COUNT(*) AS total
      FROM receipt r
-     JOIN customer c ON c.id = r.customer_id   -- customer_id
+     JOIN customer c ON c.id = r.customer_id
      ${where}`,
     params,
   );
@@ -34,7 +34,7 @@ export async function getReceiptList({ date_from, date_to, customer_code, page =
     `SELECT r.receipt_no, r.receipt_date, r.payment_method, r.payment_notes, r.total_received,
             c.code AS customer_code, c.name AS customer_name
      FROM receipt r
-     JOIN customer c ON c.id = r.customer_id   -- customer_id
+     JOIN customer c ON c.id = r.customer_id
      ${where}
      ORDER BY r.receipt_date DESC, r.receipt_no ASC
      LIMIT $${idx++} OFFSET $${idx++}`,
@@ -50,15 +50,15 @@ export async function getInvoiceReceiptReport({ date_from, date_to, customer_cod
   let idx = 1;
 
   if (date_from) {
-    conditions.push(`i.invoice_date >= $${idx++}`);   -- invoice_date
+    conditions.push(`i.invoice_date >= $${idx++}`);
     params.push(date_from);
   }
   if (date_to) {
-    conditions.push(`i.invoice_date <= $${idx++}`);   -- invoice_date
+    conditions.push(`i.invoice_date <= $${idx++}`);
     params.push(date_to);
   }
   if (customer_code && String(customer_code).trim() !== "") {
-    conditions.push(`c.code = $${idx++}`);    -- code
+    conditions.push(`c.code = $${idx++}`);
     params.push(String(customer_code).trim());
   }
 
@@ -68,9 +68,9 @@ export async function getInvoiceReceiptReport({ date_from, date_to, customer_cod
     WITH invoice_totals AS (
       SELECT
         i.id AS invoice_id,
-        COALESCE(SUM(rli.amount_received), 0) AS total_received_all   -- amount_received
+        COALESCE(SUM(rli.amount_received), 0) AS total_received_all
       FROM invoice i
-      LEFT JOIN receipt_line_item rli ON rli.invoice_id = i.id  -- invoice_id, id
+      LEFT JOIN receipt_line_item rli ON rli.invoice_id = i.id
       GROUP BY i.id
     )
   `;
@@ -79,10 +79,10 @@ export async function getInvoiceReceiptReport({ date_from, date_to, customer_cod
     `${cteQuery}
      SELECT COUNT(*) AS total
      FROM invoice i
-     JOIN customer c ON c.id = i.customer_id          -- customer_id
+     JOIN customer c ON c.id = i.customer_id
      JOIN invoice_totals it ON it.invoice_id = i.id
-     LEFT JOIN receipt_line_item rli ON rli.invoice_id = i.id  -- invoice_id, id
-     LEFT JOIN receipt r ON r.id = rli.receipt_id    -- receipt_id
+     LEFT JOIN receipt_line_item rli ON rli.invoice_id = i.id
+     LEFT JOIN receipt r ON r.id = rli.receipt_id
      ${where}`,
     params,
   );
@@ -98,12 +98,12 @@ export async function getInvoiceReceiptReport({ date_from, date_to, customer_cod
        it.total_received_all AS amount_received,
        i.amount_due - it.total_received_all AS amount_remain,
        r.receipt_no, r.receipt_date,
-       rli.amount_received AS receipt_amount   -- amount_received
+       rli.amount_received AS receipt_amount
      FROM invoice i
-     JOIN customer c ON c.id = i.customer_id          -- customer_id
+     JOIN customer c ON c.id = i.customer_id
      JOIN invoice_totals it ON it.invoice_id = i.id
-     LEFT JOIN receipt_line_item rli ON rli.invoice_id = i.id  -- invoice_id, id
-     LEFT JOIN receipt r ON r.id = rli.receipt_id    -- receipt_id
+     LEFT JOIN receipt_line_item rli ON rli.invoice_id = i.id
+     LEFT JOIN receipt r ON r.id = rli.receipt_id
      ${where}
      ORDER BY i.invoice_date DESC, i.invoice_no ASC, r.receipt_date ASC
      LIMIT $${idx++} OFFSET $${idx++}`,

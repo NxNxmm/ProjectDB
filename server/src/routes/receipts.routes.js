@@ -5,7 +5,7 @@ import {
   handleCreate,
   handleUpdate,
   handleDelete,
-  handleListUnpaidInvoices
+  handleListUnpaidInvoices,
 } from "../controllers/receipts.controller.js";
 
 const router = Router();

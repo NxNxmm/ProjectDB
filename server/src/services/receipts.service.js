@@ -30,7 +30,7 @@ export async function listReceipts({
              r.total_received,
              c.code AS customer_code, c.name AS customer_name
       FROM receipt r
-      JOIN customer c ON c.id = r.customer_id          -- customer_id
+      JOIN customer c ON c.id = r.customer_id
       WHERE r.receipt_no ILIKE $1 OR c.name ILIKE $1
       ORDER BY ${sortColumn} ${sortDirection} NULLS LAST, r.id DESC
       LIMIT $2 OFFSET $3
@@ -56,8 +56,8 @@ export async function getReceipt(receiptNo) {
              c.address_line1, c.address_line2,
              co.name AS country_name
       FROM receipt r
-      JOIN customer c ON c.id = r.customer_id          -- customer_id
-      LEFT JOIN country co ON co.id = c.country_id    -- country_id
+      JOIN customer c ON c.id = r.customer_id
+      LEFT JOIN country co ON co.id = c.country_id
       WHERE r.receipt_no = $1
     `,
     [receiptNo],
@@ -68,8 +68,8 @@ export async function getReceipt(receiptNo) {
   const header = headerResult.rows[0];
   const receiptId = header.receipt_id;
 
-  // ⚠️ สำคัญมาก: amount_already_received ต้อง EXCLUDE current receipt ออก
-  // เพื่อให้ "รับแล้ว" แสดงตัวเลขจาก receipt อื่นเท่านั้น ไม่รวมอันปัจจุบัน
+  // ⚠️ CRITICAL: amount_already_received must EXCLUDE the current receipt's own payments
+  // so the "Already Received" column shows amounts from OTHER receipts only.
   const linesResult = await pool.query(
     `
       SELECT
@@ -78,20 +78,20 @@ export async function getReceipt(receiptNo) {
         i.amount_due,
         rli.amount_received,
         COALESCE((
-          SELECT SUM(rli2.amount_received)              -- amount_received
+          SELECT SUM(rli2.amount_received)
           FROM receipt_line_item rli2
-          WHERE rli2.invoice_id = rli.invoice_id -- invoice_id = invoice_id
-            AND rli2.receipt_id != $2             -- receipt_id != receiptId (exclude ตัวเอง)
+          WHERE rli2.invoice_id = rli.invoice_id
+            AND rli2.receipt_id != $2
         ), 0) AS amount_already_received,
         i.amount_due - COALESCE((
-          SELECT SUM(rli2.amount_received)              -- amount_received
+          SELECT SUM(rli2.amount_received)
           FROM receipt_line_item rli2
-          WHERE rli2.invoice_id = rli.invoice_id -- invoice_id = invoice_id
-            AND rli2.receipt_id != $2             -- receipt_id != receiptId
+          WHERE rli2.invoice_id = rli.invoice_id
+            AND rli2.receipt_id != $2
         ), 0) AS amount_remain_before_this
       FROM receipt_line_item rli
-      JOIN invoice i ON i.id = rli.invoice_id     -- invoice_id
-      WHERE rli.receipt_id = $1                   -- receipt_id = receiptId
+      JOIN invoice i ON i.id = rli.invoice_id
+      WHERE rli.receipt_id = $1
       ORDER BY rli.id
     `,
     [receiptId, receiptId],
@@ -146,12 +146,12 @@ export async function createReceipt({
 
     const enrichedLines = [];
     for (const li of line_items) {
-      const inv = await client.query("SELECT id FROM invoice WHERE invoice_no = $1", [li.invoice_no]);
-      if (inv.rowCount === 0) throw new Error(`Invoice not found: ${li.invoice_no}`);
-      enrichedLines.push({ invoice_id: inv.rows[0].id, amount_received: Number(li.amount_received) });
+      const inv = await client.query("SELECT id FROM invoice WHERE invoice_no = $1", [li.invoice_no]);  // invoice_no
+      if (inv.rowCount === 0) throw new Error(`Invoice not found: ${li.invoice_no}`);  // invoice_no
+      enrichedLines.push({ invoice_id: inv.rows[0].id, amount_received: Number(li.amount_received) });  // amount_received
     }
 
-    const total_received = enrichedLines.reduce((s, x) => s + x.amount_received, 0);  -- amount_received
+    const total_received = enrichedLines.reduce((s, x) => s + x.amount_received, 0);  // amount_received
 
     const rcpt = await client.query(
       `
@@ -178,7 +178,7 @@ export async function createReceipt({
             $1,$2,$3
           )
         `,
-        [receipt_id, li.invoice_id, li.amount_received],  -- invoice_id, amount_received
+        [receipt_id, li.invoice_id, li.amount_received],  // invoice_id, amount_received
       );
     }
 
@@ -201,8 +201,8 @@ export async function updateReceipt(
     await client.query("begin");
 
     const cur = await client.query("SELECT id FROM receipt WHERE receipt_no = $1", [receiptNo]);
-    if (cur.rowCount === 0) throw new Error(`Receipt not found: ${receiptNo}`);  -- rowCount
-    const receipt_id = cur.rows[0].id;  -- id
+    if (cur.rowCount === 0) throw new Error(`Receipt not found: ${receiptNo}`);
+    const receipt_id = cur.rows[0].id;
 
     const code = customer_code != null ? String(customer_code).trim() : "";
     const cust = await client.query("SELECT id FROM customer WHERE code = $1", [code]);
@@ -216,7 +216,7 @@ export async function updateReceipt(
       enrichedLines.push({ invoice_id: inv.rows[0].id, amount_received: Number(li.amount_received) });
     }
 
-    const total_received = enrichedLines.reduce((s, x) => s + x.amount_received, 0);  -- amount_received
+    const total_received = enrichedLines.reduce((s, x) => s + x.amount_received, 0);  // amount_received
 
     await client.query(
       `
@@ -239,7 +239,7 @@ export async function updateReceipt(
             $1,$2,$3
           )
         `,
-        [receipt_id, li.invoice_id, li.amount_received],  -- invoice_id, amount_received
+        [receipt_id, li.invoice_id, li.amount_received],  // invoice_id, amount_received
       );
     }
 
@@ -273,9 +273,9 @@ export async function listUnpaidInvoicesByCustomer(customerCode, excludeReceiptN
     if (rctResult.rowCount > 0) excludeReceiptId = rctResult.rows[0].id;
   }
 
-  // กรองเฉพาะ invoice ที่ amount_remain > 0
-  // ถ้ากำลัง edit receipt อยู่ ให้ exclude payment ของ receipt นั้นออก
-  // เพื่อให้ invoice ที่อยู่ใน receipt ปัจจุบันยังปรากฏใน LoV
+  // Filter to invoices where amount_remain > 0
+  // If editing a receipt, exclude that receipt's own payments
+  // so its invoice lines still appear in the LoV
   const { rows } = await pool.query(
     `
       SELECT
@@ -286,22 +286,22 @@ export async function listUnpaidInvoicesByCustomer(customerCode, excludeReceiptN
         COALESCE((
           SELECT SUM(rli.amount_received)
           FROM receipt_line_item rli
-          WHERE rli.invoice_id = i.id   -- invoice_id = id
-            AND ($1::bigint IS NULL OR rli.receipt_id != $1)  -- receipt_id != excludeReceiptId
+          WHERE rli.invoice_id = i.id
+            AND ($1::bigint IS NULL OR rli.receipt_id != $1)
         ), 0) AS amount_received,
         i.amount_due - COALESCE((
-          SELECT SUM(rli.amount_received)              -- amount_received
+          SELECT SUM(rli.amount_received)
           FROM receipt_line_item rli
-          WHERE rli.invoice_id = i.id   -- invoice_id = id
-            AND ($1::bigint IS NULL OR rli.receipt_id != $1)  -- receipt_id != excludeReceiptId
+          WHERE rli.invoice_id = i.id
+            AND ($1::bigint IS NULL OR rli.receipt_id != $1)
         ), 0) AS amount_remain
       FROM invoice i
-      WHERE i.customer_id = $2                    -- customer_id
+      WHERE i.customer_id = $2
         AND i.amount_due - COALESCE((
-          SELECT SUM(rli.amount_received)              -- amount_received
+          SELECT SUM(rli.amount_received)
           FROM receipt_line_item rli
-          WHERE rli.invoice_id = i.id   -- invoice_id = id
-            AND ($1::bigint IS NULL OR rli.receipt_id != $1)  -- receipt_id != excludeReceiptId
+          WHERE rli.invoice_id = i.id
+            AND ($1::bigint IS NULL OR rli.receipt_id != $1)
         ), 0) > 0
       ORDER BY i.invoice_date ASC, i.invoice_no ASC
     `,

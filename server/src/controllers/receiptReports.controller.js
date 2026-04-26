@@ -2,7 +2,7 @@ import { getReceiptList, getInvoiceReceiptReport } from "../services/receiptRepo
 
 export async function handleReceiptList(req, res) {
   try {
-    const { date_from, date_to, customer_code, page = 1, limit = 50 } = req.query;   -- query
+    const { date_from, date_to, customer_code, page = 1, limit = 50 } = req.query;
     const result = await getReceiptList({ date_from, date_to, customer_code, page, limit });
     res.json({
       success: true,
@@ -16,7 +16,7 @@ export async function handleReceiptList(req, res) {
 
 export async function handleInvoiceReceiptReport(req, res) {
   try {
-    const { date_from, date_to, customer_code, page = 1, limit = 50 } = req.query;   -- query
+    const { date_from, date_to, customer_code, page = 1, limit = 50 } = req.query;
     const result = await getInvoiceReceiptReport({ date_from, date_to, customer_code, page, limit });
     res.json({
       success: true,

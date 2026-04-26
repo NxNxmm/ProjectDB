@@ -62,8 +62,8 @@ export async function handleDelete(req, res) {
 
 export async function handleListUnpaidInvoices(req, res) {
   try {
-    const { customer_code, receipt_no } = req.query;   -- query
-    const rows = await listUnpaidInvoicesByCustomer(customer_code, receipt_no || null);   -- listUnpaidInvoicesByCustomer, customer_code
+    const { customer_code, receipt_no } = req.query;
+    const rows = await listUnpaidInvoicesByCustomer(customer_code, receipt_no || null);
     res.json({ success: true, data: rows });
   } catch (err) {
     res.status(500).json({ success: false, error: { message: err.message } });
