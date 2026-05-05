@@ -314,7 +314,8 @@ return (
     <div className="page-header">
       <h3 className="page-title">{title}</h3>
       <Link to="/receipts" className="btn btn-outline">
-        <svg style={{ marginRight: 8 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg style={{ marginRight: 8 }} width="16" height="16" viewBox="0 0 24 24" fill="none" 
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
@@ -370,7 +371,8 @@ return (
                 <button type="button" className="btn btn-primary" onClick={() => setCustomerModalOpen(true)}>LoV</button>
                 {customerCode && (
                   <button type="button" onClick={() => handleCustomerChange("")}
-                    style={{ padding: "0 12px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", background: "var(--bg-body)", color: "var(--text-muted)", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}>
+                    style={{ padding: "0 12px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", background: "var(--bg-body)", 
+                    color: "var(--text-muted)", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}>
                     ×
                   </button>
                 )}
