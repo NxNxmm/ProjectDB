@@ -12,14 +12,14 @@ function buildQuery(params) {
   ).toString();
 }
 
-export async function fetchReceiptList(params) {   -- params
-  const q = buildQuery(params);   -- buildQuery
-  const res = unwrap(await http(`/api/receipt-reports/receipt-list${q ? `?${q}` : ""}`));   -- receipt-list
-  return { data: res.data, ...(res.meta || {}) };   -- meta
+export async function fetchReceiptList(params) {
+  const q = buildQuery(params);
+  const res = unwrap(await http(`/api/receipt-reports/receipt-list${q ? `?${q}` : ""}`));
+  return { data: res.data, ...(res.meta || {}) };
 }
 
-export async function fetchInvoiceReceiptReport(params) {   -- params
-  const q = buildQuery(params);   -- buildQuery
-  const res = unwrap(await http(`/api/receipt-reports/invoice-receipt${q ? `?${q}` : ""}`));   -- invoice-receipt
-  return { data: res.data, ...(res.meta || {}) };   -- meta
+export async function fetchInvoiceReceiptReport(params) {
+  const q = buildQuery(params);
+  const res = unwrap(await http(`/api/receipt-reports/invoice-receipt${q ? `?${q}` : ""}`));
+  return { data: res.data, ...(res.meta || {}) };
 }

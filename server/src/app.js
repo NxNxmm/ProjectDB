@@ -113,7 +113,7 @@ app.use("/api/products", productsRoutes);
 app.use("/api/invoices", invoicesRoutes);
 app.use("/api/sales-persons", salesPersonsRoutes);
 app.use("/api/config", configurationRoutes);
-app.use("/api/payments", paymentsRoutes);
+// app.use("/api/payments", paymentsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/receipts", receiptsRoutes);
 app.use("/api/receipt-reports", receiptReportsRoutes);
