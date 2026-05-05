@@ -1,5 +1,5 @@
 import React from "react";
-import { createPortal } from "react-dom";  // render modal ไว้ที่ document.body แทน parent element
+import { createPortal } from "react-dom";
 import { listUnpaidInvoices } from "../../api/receipts.api.js";
 import { formatBaht, formatDate } from "../../utils.js";
 import { TableLoading } from "../../components/Loading.jsx";
@@ -10,16 +10,15 @@ export default function InvoicePickerModal({ isOpen, onClose, onSelect, customer
   const [err, setErr] = React.useState("");
 
   React.useEffect(() => {
-    // ถ้า modal ปิดอยู่ หรือยังไม่ได้เลือก customer → ไม่ต้องโหลด
     if (!isOpen || !customerCode) { setData([]); return; }
-    let cancelled = false;  // ป้องกัน state update หลัง component unmount
+    let cancelled = false;
     setLoading(true);
     setErr("");
     listUnpaidInvoices(customerCode, excludeReceiptNo || null)
       .then((rows) => { if (!cancelled) setData(rows); })
       .catch((e) => { if (!cancelled) setErr(String(e.message || e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };  // cleanup: ยกเลิก async ถ้า modal ปิดก่อน fetch เสร็จ
+    return () => { cancelled = true; };
   }, [isOpen, customerCode, excludeReceiptNo]);
 
   if (!isOpen) return null;
@@ -68,7 +67,7 @@ export default function InvoicePickerModal({ isOpen, onClose, onSelect, customer
                 ) : data.length === 0 ? (
                   <tr>
                     <td colSpan={6} style={{ textAlign: "center", padding: 32, color: "var(--text-muted)" }}>
-                      {customerCode ? "No unpaid invoices for this customer." : "Select a customer first."} 
+                      {customerCode ? "No unpaid invoices for this customer." : "Select a customer first."}
                     </td>
                   </tr>
                 ) : (

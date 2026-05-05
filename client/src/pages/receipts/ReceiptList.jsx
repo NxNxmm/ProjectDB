@@ -49,7 +49,7 @@ export default function ReceiptList() {
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         onClose={closeConfirm}
-        onConfirm={confirmDelete}     
+        onConfirm={confirmDelete}
         closeOnConfirm={false}
         title="Delete Receipt"
         message="Are you sure you want to delete this receipt? This will remove all payment records associated with it."
@@ -69,7 +69,7 @@ export default function ReceiptList() {
         searchPlaceholder="Search receipt no, customer..."
         itemName="receipts"
         basePath="/receipts"
-        itemKey="receipt_no"   
+        itemKey="receipt_no"
         onDelete={handleDelete}
       />
     </>

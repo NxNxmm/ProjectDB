@@ -7,7 +7,7 @@ import fs from "fs";
 
 import logger from "./utils/logger.js";
 import invoicesRoutes from "./routes/invoices.routes.js";
-import paymentsRoutes from "./routes/payments.routes.js";
+// import paymentsRoutes from "./routes/payments.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
 import customersRoutes from "./routes/customers.routes.js";
 import productsRoutes from "./routes/products.routes.js";
